@@ -1,0 +1,54 @@
+{
+  "info": {
+    "name": "Route Fuel API - OpenRouteService",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/health/"
+      }
+    },
+    {
+      "name": "Optimize Fuel - New York to Chicago",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Token {{api_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start_location\": \"New York, NY\",\n  \"finish_location\": \"Chicago, IL\",\n  \"vehicle_range_miles\": 500,\n  \"miles_per_gallon\": 10,\n  \"route_corridor_miles\": 15\n}"
+        },
+        "url": "{{base_url}}/api/v1/trips/optimize-fuel/"
+      }
+    },
+    {
+      "name": "Optimize Fuel - Los Angeles to Dallas",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Token {{api_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start_location\": \"Los Angeles, CA\",\n  \"finish_location\": \"Dallas, TX\",\n  \"vehicle_range_miles\": 500,\n  \"miles_per_gallon\": 10,\n  \"route_corridor_miles\": 20\n}"
+        },
+        "url": "{{base_url}}/api/v1/trips/optimize-fuel/"
+      }
+    },
+    {
+      "name": "Swagger Docs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{base_url}}/api/docs/"
+      }
+    }
+  ]
+}

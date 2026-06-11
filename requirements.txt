@@ -1,0 +1,12 @@
+Django>=6.0,<6.1
+djangorestframework>=3.16,<3.17
+django-environ>=0.12,<0.13
+psycopg[binary]>=3.2,<3.3
+requests>=2.32,<2.33
+granian[reload]>=2.0,<3.0
+whitenoise>=6.9,<7.0
+celery>=5.5,<5.6
+redis>=5.2,<6.0
+django-redis>=5.4,<5.5
+drf-spectacular>=0.28,<0.29
+django-cors-headers==4.9.0

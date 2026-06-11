@@ -1,0 +1,9 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+.coverage
+.pytest_cache/
+.ruff_cache/
+htmlcov/

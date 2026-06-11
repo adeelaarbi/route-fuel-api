@@ -1,0 +1,154 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: route_fuel_web
+    command: >
+      sh -c "
+      python manage.py migrate --noinput &&
+      python manage.py collectstatic --noinput &&
+      python start.py
+      "
+    env_file:
+      - .env.example
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_DEBUG: 1
+      DATABASE_URL: postgis://route_fuel:route_fuel@db:5432/route_fuel
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+
+      GRANIAN_HOST: 0.0.0.0
+      GRANIAN_PORT: 8000
+      GRANIAN_WORKERS: 1
+      GRANIAN_BLOCKING_THREADS: 4
+      GRANIAN_BACKPRESSURE: 16
+      GRANIAN_ACCESS_LOG: "false"
+      GRANIAN_LOG_LEVEL: info
+
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tmpfs:
+      - /tmp:size=128m
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: "1.0"
+    restart: unless-stopped
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: route_fuel_celery
+    command: >
+      celery
+      -A config
+      worker
+      --loglevel=info
+      --concurrency=1
+      --prefetch-multiplier=1
+      --max-tasks-per-child=100
+      --without-gossip
+      --without-mingle
+      --without-heartbeat
+    env_file:
+      - .env.example
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DATABASE_URL: postgis://route_fuel:route_fuel@db:5432/route_fuel
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - media_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    tmpfs:
+      - /tmp:size=128m
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: "0.75"
+    restart: unless-stopped
+
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: route_fuel_db
+    environment:
+      POSTGRES_DB: route_fuel
+      POSTGRES_USER: route_fuel
+      POSTGRES_PASSWORD: route_fuel
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=40
+      - -c
+      - effective_cache_size=512MB
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    shm_size: 128mb
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: "1.0"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U route_fuel -d route_fuel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: route_fuel_redis
+    command:
+      - redis-server
+      - --appendonly
+      - "no"
+      - --save
+      - ""
+      - --maxmemory
+      - 128mb
+      - --maxmemory-policy
+      - allkeys-lru
+    ports:
+      - "6379:6379"
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: "0.25"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
